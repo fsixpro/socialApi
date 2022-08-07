@@ -1,4 +1,5 @@
 import { model, Schema } from "mongoose";
+import { hash } from "argon2";
 
 const UserSchema = new Schema(
   {
@@ -6,7 +7,7 @@ const UserSchema = new Schema(
       type: String,
       required: true,
     },
-    lasttName: {
+    lastName: {
       type: String,
       required: true,
     },
@@ -18,8 +19,16 @@ const UserSchema = new Schema(
     password: {
       type: String,
       required: true,
+      select: false,
     },
   },
   { timestamps: true }
 );
+UserSchema.pre("save", async function (next) {
+  if (!this.isModified("password")) return next();
+  const hashPassword = await hash(this.password);
+  this.password = hashPassword;
+  next();
+});
+
 export default model("User", UserSchema);
